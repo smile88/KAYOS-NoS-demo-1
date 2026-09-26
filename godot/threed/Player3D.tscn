@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://threed/Player3D.gd" id="1_player"]
+
+[sub_resource type="CapsuleShape3D" id="cap"]
+radius = 0.3
+height = 1.4
+
+[node name="Player3D" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("cap")

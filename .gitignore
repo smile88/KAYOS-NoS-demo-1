@@ -1,0 +1,5 @@
+# Godot's import cache and the local web build (CI rebuilds it and publishes to gh-pages)
+godot/.godot/
+build/
+godot/override.cfg
+*.tmp

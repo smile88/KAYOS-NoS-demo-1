@@ -1,0 +1,47 @@
+name: Build and publish the web demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7 and its web export templates
+        run: |
+          curl -sSL -o godot.zip https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          curl -sSL -o templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.7.stable
+          unzip -q -j templates.tpz 'templates/web_nothreads_*' 'templates/version.txt' -d ~/.local/share/godot/export_templates/4.7.stable
+          rm templates.tpz
+
+      - name: Import and export for the web
+        run: |
+          G=./Godot_v4.7-stable_linux.x86_64
+          # twice: the first pass imports the font before the theme that uses it can load
+          $G --headless --path godot --import || true
+          $G --headless --path godot --import || true
+          mkdir -p build/web
+          $G --headless --path godot --export-release "Web" ../build/web/index.html
+          test -s build/web/index.wasm && test -s build/web/index.pck
+          touch build/web/.nojekyll
+
+      - name: Publish to the gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+          force_orphan: true
+          commit_message: "Web build of ${{ github.sha }}"
