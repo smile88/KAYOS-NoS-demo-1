@@ -5,7 +5,7 @@ const W = 844, H = 390;
   const out = process.env.OUT || '/tmp/touch';
   require('fs').mkdirSync(out, { recursive: true });
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, ignoreHTTPSErrors: !!process.env.URL });
   const pg = await ctx.newPage();
   const logs = [];
   pg.on('console', m => { if (!m.text().includes('AudioContext')) logs.push(m.type() + ': ' + m.text()); });
@@ -13,7 +13,7 @@ const W = 844, H = 390;
   const cdp = await ctx.newCDPSession(pg);
   const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
   const shot = n => pg.screenshot({ path: `${out}/${n}.png` });
-  await pg.goto('http://localhost:8765/index.html?fps=1');
+  await pg.goto('' + (process.env.URL || 'http://localhost:8765/index.html?fps=1') + '');
   await pg.waitForFunction(() => window.__ready === true || document.title.length > 0, null, { timeout: 60000 });
   // wait for the opening card to clear
   const until = async (re, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (logs.some(l => re.test(l))) return true; await pg.waitForTimeout(500); } return false; };
